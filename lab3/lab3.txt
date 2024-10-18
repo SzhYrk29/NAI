@@ -1,0 +1,10 @@
+Zadanie 2:
+Trasy są generowane po prostokątach dlatego, że funkcja accessible definiuje sąsiadów tylko 
+w czterech kierunkach (lowe, prawo, góra, dół), co ograniczha ruch do prostych linii. 
+
+Zadanie 5.2: 
+Euklides: 1.38 secs, Manhattan: 1.05 secs, Losowo: 1.62 secs
+Metryka Manhattan działa szybzej z tego powodu, że jest prostsza w obliczeniach, 
+ta metryka wykorzystuje tylko dodawanie i odejmowanie, które są bradzo szybkie. 
+Z kolei np. metryka Euklidesa wymaga pierwiastkowania i podnoszenia do drugiej potęgi,
+te operacje bardziej kosztowne obliczeniowo.

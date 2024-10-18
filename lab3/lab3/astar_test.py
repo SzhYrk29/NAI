@@ -2,8 +2,9 @@ import random
 from PIL import Image
 import numpy as np
 import math
+import time
 
-def search_path_with_astar(start, goal, accessible_fn, h, callback_fn):
+def search_path_with_astar(start, goal, accessible_fn, cost_fn, h, callback_fn):
     open_set = {tuple(start)}
     closed_set = set()
     came_from = {}
@@ -30,7 +31,7 @@ def search_path_with_astar(start, goal, accessible_fn, h, callback_fn):
             if tuple(neighbor) in closed_set:
                 continue
 
-            tentative_g_score = g_score.get(current, float('inf')) + h(neighbor, current)
+            tentative_g_score = g_score.get(current, float('inf')) + cost_fn(neighbor)
 
             if tuple(neighbor) not in open_set:
                 open_set.add(tuple(neighbor))
@@ -69,15 +70,13 @@ def setpixel(image, dims, position, value):
 def accessible(bitmap, dims, point):
     neighbors = []
     height, width = dims
-    for i in range(len(point)):
-        for delta in [-1, 1]:
-            neighbor = list(point)
-            neighbor[i] += delta
-            neighbor = tuple(neighbor)
-            x, y = neighbor[0], neighbor[1]
-            if 0 <= x < width and 0 <= y < height:
-                if bitmap[y, x][0] == 0:
-                    neighbors.append(neighbor)
+    directions = [(-1, 0), (1, 0), (0, -1), (0, 1), (-1, -1), (-1, 1), (1, -1), (1, 1)]
+    for direction in directions:
+        neighbor = (point[0] + direction[0], point[1] + direction[1])
+        x, y = neighbor
+        if 0 <= x < width and 0 <= y < height:
+            if bitmap[y, x][0] == 0: 
+                neighbors.append(neighbor)
     return neighbors
 
 def load_world_map(fname):
@@ -98,10 +97,18 @@ def find_pixel_position(image, dims, value):
                 return [x, y]
     raise ValueError("Could not find pixel with the given value!")
 
+def create_cost_map(dims):
+    cost_map = np.random.randint(1, 5, size=dims)  # Koszty przejścia od 1 do 4
+    return cost_map
+
+def cost_function(cost_map, position):
+    return cost_map[position[1], position[0]]
+
 if __name__ == "__main__":
     metric_choice = input("Choose a metric (euclidean, manhattan, random): ").strip().lower()
 
     dims, bitmap = load_world_map("img.png")
+    cost_map = create_cost_map(dims)
 
     start = find_pixel_position(bitmap, dims, (255, 0, 255, 255))  # Cyan pixel
     goal = find_pixel_position(bitmap, dims, (255, 255, 0, 255))    # Yellow pixel
@@ -122,11 +129,16 @@ if __name__ == "__main__":
         print("Invalid metric choice. Using Euclidean by default.")
         heuristic = h_function_euklides
 
-    path = search_path_with_astar(start, goal, lambda p: accessible(bitmap, dims, p), heuristic, on_iteration_nothing)
+    start_time = time.time()
 
-    print(path)
+    path = search_path_with_astar(start, goal, lambda p: accessible(bitmap, dims, p), lambda p: cost_function(cost_map, p), heuristic, on_iteration_nothing)
+
+    end_time = time.time()
+
+    print(f"Path length: {len(path)}")
+    print(f"Execution time: {end_time - start_time} seconds")
 
     for p in path:
-        setpixel(bitmap, dims, p, (255, 0, 0, 255))  # Mark the path with red
+        setpixel(bitmap, dims, p, (255, 0, 0, 255))
 
     save_world_map("result.png", bitmap)
